@@ -1,4 +1,7 @@
 #!/bin/bash
+#### Script for DNS Query Performance Measurement
+
+
 
 # Color codes for output
 GREEN='\033[0;32m'
