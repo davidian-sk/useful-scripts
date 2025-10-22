@@ -37,7 +37,7 @@ def parse_session_line(session_name, data_string, folder_name):
                 'Folder': folder_name,
                 'Name': session_name,
                 'Type': session_type,
-                'Host': host,
+                'Host': f'="{host}"', # <-- FIX: Force Excel to treat IP as text
                 'User': user,
                 'Port': port
             }
