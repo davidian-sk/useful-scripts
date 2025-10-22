@@ -38,7 +38,7 @@ def parse_session_line(session_name, data_string, folder_name):
                 'Folder': folder_name,
                 'Name': session_name,
                 'Type': session_type,
-                'Host': f"'{host}", # <-- NEW FIX: Prepend ' to force text but stay hidden
+                'Host': host, # <-- Reverted: Removed the leading single quote
                 'User': user,
                 'Port': port
             }
