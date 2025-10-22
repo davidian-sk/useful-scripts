@@ -2,6 +2,7 @@ import csv
 import os
 import sys
 import configparser
+from collections import defaultdict
 
 # MobaXterm session type codes. We can add more if you use them.
 SESSION_TYPES = {
@@ -46,16 +47,15 @@ def parse_session_line(session_name, data_string, folder_name):
         pass
     return None
 
-def parse_moba_sessions_file(ini_file_path, csv_file_path):
+def parse_moba_sessions_file(ini_file_path):
     """
-    Parses a MobaXterm .mxtsessions file, handling both flat and folder structures.
+    Parses a MobaXterm .mxtsessions file and returns a list of session dicts.
     """
     print(f"Parsing '{os.path.basename(ini_file_path)}'...")
     
     sessions = []
     
     # Use configparser for robust INI file handling
-    # --- THIS IS THE FIX ---
     # We MUST disable comment prefixes, otherwise it treats the session data 
     # (which starts with '#') as a comment and ignores the entire line.
     config = configparser.ConfigParser(
@@ -69,7 +69,7 @@ def parse_moba_sessions_file(ini_file_path, csv_file_path):
         config.read(ini_file_path, encoding='utf-8-sig')
     except Exception as e:
         print(f"Error reading file as INI: {e}")
-        return
+        return [] # Return an empty list on error
 
     # Process all sections in the file (e.g., [Bookmarks], [Bookmarks_1], etc.)
     for section in config.sections():
@@ -92,22 +92,8 @@ def parse_moba_sessions_file(ini_file_path, csv_file_path):
 
     if not sessions:
         print("No valid sessions were found in the file.")
-        return
-
-    # --- Write the data to the CSV file ---
-    # Added 'Folder' as the first column
-    headers = ['Folder', 'Name', 'Type', 'Host', 'User', 'Port']
     
-    try:
-        with open(csv_file_path, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=headers)
-            writer.writeheader()
-            writer.writerows(sessions)
-        
-        print(f"Success! ✨ Exported {len(sessions)} sessions to '{os.path.basename(csv_file_path)}'")
-
-    except IOError as e:
-        print(f"Error writing CSV file: {e}")
+    return sessions
 
 # --- Run the script ---
 if __name__ == "__main__":
@@ -139,12 +125,40 @@ if __name__ == "__main__":
         print("-" * 30) # Add a separator for clarity
         input_file_path = os.path.join(script_dir, filename)
         
-        # Create the output CSV name (e.g., "MyFile.mxtsessions" -> "MyFile.csv")
+        # Get the base name for output files (e.g., "MyFile.mxtsessions" -> "MyFile")
         base_name = os.path.splitext(input_file_path)[0]
-        output_file_path = base_name + '.csv'
         
-        # Run the parser function on the file
-        parse_moba_sessions_file(input_file_path, output_file_path)
+        # Run the parser function to get all sessions from the file
+        all_sessions = parse_moba_sessions_file(input_file_path)
+
+        if not all_sessions:
+            continue # Skip to the next file if this one was empty
+
+        # Group sessions by type (e.g., 'SSH', 'SFTP')
+        grouped_sessions = defaultdict(list)
+        for session in all_sessions:
+            grouped_sessions[session['Type']].append(session)
+        
+        print(f"Found {len(all_sessions)} total sessions, grouped into {len(grouped_sessions)} types.")
+
+        # Define the headers for the CSV
+        headers = ['Folder', 'Name', 'Type', 'Host', 'User', 'Port']
+
+        # Loop through each group and write a separate CSV
+        for session_type, sessions_list in grouped_sessions.items():
+            # Create a unique filename for this type, e.g., "MyFile_SSH.csv"
+            output_file_path = f"{base_name}_{session_type}.csv"
+            
+            try:
+                with open(output_file_path, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.DictWriter(f, fieldnames=headers)
+                    writer.writeheader()
+                    writer.writerows(sessions_list)
+                
+                print(f"Success! ✨ Exported {len(sessions_list)} {session_type} sessions to '{os.path.basename(output_file_path)}'")
+            
+            except IOError as e:
+                print(f"Error writing CSV file '{os.path.basename(output_file_path)}': {e}")
 
     print("-" * 30)
     print("\nAll files processed.")
