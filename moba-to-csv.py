@@ -4,18 +4,24 @@ import sys
 import configparser
 from collections import defaultdict
 
-# MobaXterm session type codes. We can add more if you use them.
+# Expanded list of session types found in MobaXterm files
 SESSION_TYPES = {
+    "#91#": "RDP",
     "#109#": "SSH",
-    "#117#": "SFTP",
     "#110#": "Telnet",
     "#114#": "RDP",
     "#115#": "VNC",
     "#116#": "FTP",
+    "#117#": "SFTP",
+    "#128#": "VNC",
+    "#130#": "FTP",
 }
 
 def parse_session_line(session_name, data_string, folder_name):
-    """Helper function to parse a single session data string."""
+    """
+    Helper function to parse a single session data string and map it
+    to Royal TS compatible column names.
+    """
     try:
         # Split the data string by the '%' delimiter
         parts = data_string.split('%')
@@ -24,26 +30,42 @@ def parse_session_line(session_name, data_string, folder_name):
         host = parts[1]
         port = parts[2]
         user = parts[3]
-
+        
+        # Clean the username (e.g., [david] -> david)
+        if user.startswith('[') and user.endswith(']'):
+            user = user[1:-1]
+            
         # Determine the session type from the code in parts[0]
+        session_code = parts[0]
         session_type = "Unknown"
         for code, type_name in SESSION_TYPES.items():
-            if code in parts[0]:
+            if code in session_code:
                 session_type = type_name
                 break
         
+        # Moba uses '\', Royal TS uses '/' for nested folders
+        royal_folder = folder_name.replace('\\', '/').strip()
+
+        # Check for a private key file (for SSH)
+        private_key = ""
+        if session_type == "SSH" and len(parts) > 10 and ('.pem' in parts[10] or '.ppk' in parts[10]):
+            # Clean up the Moba-specific profile directory variable
+            private_key = parts[10].replace('_ProfileDir_', '%USERPROFILE%\\Documents\\MobaXterm\\')
+
         # Only return a dict if we have the essential info
         if host and user:
+            # Map to Royal TS Column Names
             return {
-                'Folder': folder_name,
+                'Folder': royal_folder,
                 'Name': session_name,
-                'Type': session_type,
-                'Host': host, # <-- Reverted: Removed the leading single quote
-                'User': user,
-                'Port': port
+                'URI': host,
+                'CredentialName': user,
+                'Port': port,
+                'Description': f"Imported from MobaXterm (Type: {session_type})",
+                'PrivateKeyFile': private_key, # <-- NEW COLUMN
+                '__Internal_Type': session_type # Internal key for file splitting
             }
     except IndexError:
-        # This line is probably a folder or a malformed entry. Skip it.
         pass
     return None
 
@@ -55,9 +77,6 @@ def parse_moba_sessions_file(ini_file_path):
     
     sessions = []
     
-    # Use configparser for robust INI file handling
-    # We MUST disable comment prefixes, otherwise it treats the session data 
-    # (which starts with '#') as a comment and ignores the entire line.
     config = configparser.ConfigParser(
         interpolation=None, 
         strict=False, 
@@ -69,23 +88,17 @@ def parse_moba_sessions_file(ini_file_path):
         config.read(ini_file_path, encoding='utf-8-sig')
     except Exception as e:
         print(f"Error reading file as INI: {e}")
-        return [] # Return an empty list on error
+        return [] 
 
-    # Process all sections in the file (e.g., [Bookmarks], [Bookmarks_1], etc.)
     for section in config.sections():
         folder_name = ""
-        # Sections like [Bookmarks_1] contain folders
-        # We check the 'subrep' key for the folder name
-        if section.startswith('Bookmarks_'):
+        if section.startswith('Bookmarks_') or section == 'Bookmarks':
             folder_name = config[section].get('subrep', '') 
         
-        # In Moba, every other key in the section is a session
         for key, value in config[section].items():
-            # Skip the folder metadata keys ('subrep' and 'imgnum')
             if key.lower() in ['subrep', 'imgnum']:
                 continue
             
-            # Parse the session line (e.g., "alpine-lxc" = "#109#0%192...")
             session_data = parse_session_line(key, value, folder_name)
             if session_data:
                 sessions.append(session_data)
@@ -99,59 +112,49 @@ def parse_moba_sessions_file(ini_file_path):
 if __name__ == "__main__":
     
     try:
-        # Get the directory where the script is located
         script_dir = os.path.dirname(os.path.realpath(__file__))
     except NameError:
-        # Fallback for interactive consoles
         script_dir = os.getcwd()
 
     print(f"Script is running in: {script_dir}")
 
-    # Find all .mxtsessions files in that directory
     session_files = []
     for filename in os.listdir(script_dir):
         if filename.lower().endswith('.mxtsessions'):
             session_files.append(filename)
 
-    # Exit if no files are found
     if not session_files:
         print(f"Error: No .mxtsessions files found in {script_dir} ❌")
         sys.exit(1)
 
     print(f"\nFound {len(session_files)} session file(s) to process.")
     
-    # Loop through each found file and process it
     for filename in session_files:
-        print("-" * 30) # Add a separator for clarity
+        print("-" * 30)
         input_file_path = os.path.join(script_dir, filename)
-        
-        # Get the base name for output files (e.g., "MyFile.mxtsessions" -> "MyFile")
         base_name = os.path.splitext(input_file_path)[0]
         
-        # Run the parser function to get all sessions from the file
         all_sessions = parse_moba_sessions_file(input_file_path)
 
         if not all_sessions:
-            continue # Skip to the next file if this one was empty
+            continue
 
-        # Group sessions by type (e.g., 'SSH', 'SFTP')
         grouped_sessions = defaultdict(list)
         for session in all_sessions:
-            grouped_sessions[session['Type']].append(session)
+            grouped_sessions[session['__Internal_Type']].append(session)
         
         print(f"Found {len(all_sessions)} total sessions, grouped into {len(grouped_sessions)} types.")
 
-        # Define the headers for the CSV
-        headers = ['Folder', 'Name', 'Type', 'Host', 'User', 'Port']
+        # Added 'PrivateKeyFile' to the headers
+        headers = ['Folder', 'Name', 'URI', 'CredentialName', 'Port', 'Description', 'PrivateKeyFile']
 
-        # Loop through each group and write a separate CSV
         for session_type, sessions_list in grouped_sessions.items():
-            # Create a unique filename for this type, e.g., "MyFile_SSH.csv"
+            # Create a type-specific filename (e.g., MySessions_SSH.csv)
             output_file_path = f"{base_name}_{session_type}.csv"
             
             try:
                 with open(output_file_path, 'w', newline='', encoding='utf-8') as f:
-                    writer = csv.DictWriter(f, fieldnames=headers)
+                    writer = csv.DictWriter(f, fieldnames=headers, extrasaction='ignore')
                     writer.writeheader()
                     writer.writerows(sessions_list)
                 
