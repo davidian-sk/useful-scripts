@@ -42,6 +42,12 @@ This is the workflow enhancer. Instead of manually finding files, editing them, 
 * **Disk Usage:** Check free space (df \-h).  
 * **Minimize:** Drop to the host shell to run other commands, then type exit to return to the menu.
 
+## **⚡ Quick Install (One-Liner)**
+
+Copy and run this command to download, install, and launch the script in one go:
+
+wget \-O \~/manage\_docker.sh \[https://raw.githubusercontent.com/davidian-sk/useful-scripts/main/linux/docker\_manager.sh\](https://raw.githubusercontent.com/davidian-sk/useful-scripts/main/linux/docker\_manager.sh) && chmod \+x \~/manage\_docker.sh && \~/manage\_docker.sh
+
 ## **🛠️ Requirements**
 
 * **OS:** Linux (Debian/Ubuntu/Garuda/Raspberry Pi OS)  
@@ -50,10 +56,14 @@ This is the workflow enhancer. Instead of manually finding files, editing them, 
   * dialog (for the menu interface)  
   * nano (preferred editor)
 
-## **📦 Installation & Usage**
+## **📦 Manual Installation**
 
 1. Save the script to your home or bin folder:  
-   mv manage\_docker.sh \~/manage\_docker.sh  
+   \# Create the file  
+   nano \~/manage\_docker.sh  
+   \# (Paste code and save)
+
+   \# Make executable  
    chmod \+x \~/manage\_docker.sh
 
 2. Run it:  
