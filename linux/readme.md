@@ -45,9 +45,9 @@ This is the workflow enhancer. Instead of manually finding files, editing them, 
 ## **⚡ Quick Install (One-Liner)**
 
 Copy and run this command to download, install, and launch the script in one go:
-
+```bash
 wget \-O \~/manage\_docker.sh \[https://raw.githubusercontent.com/davidian-sk/useful-scripts/main/linux/docker\_manager.sh\](https://raw.githubusercontent.com/davidian-sk/useful-scripts/main/linux/docker\_manager.sh) && chmod \+x \~/manage\_docker.sh && \~/manage\_docker.sh
-
+```
 ## **🛠️ Requirements**
 
 * **OS:** Linux (Debian/Ubuntu/Garuda/Raspberry Pi OS)  
@@ -59,16 +59,18 @@ wget \-O \~/manage\_docker.sh \[https://raw.githubusercontent.com/davidian-sk/us
 ## **📦 Manual Installation**
 
 1. Save the script to your home or bin folder:  
+```bash
    \# Create the file  
    nano \~/manage\_docker.sh  
    \# (Paste code and save)
 
    \# Make executable  
    chmod \+x \~/manage\_docker.sh
-
-2. Run it:  
+```
+2. Run it:
+```bash
    ./manage\_docker.sh
-
+```
 ## **⚙️ Customization**
 
 * **View Mode:** Toggle between "All Folders" and "Associated Folders" (folders mounted to running containers) inside the Config menu.  
