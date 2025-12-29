@@ -46,7 +46,10 @@ This is the workflow enhancer. Instead of manually finding files, editing them, 
 
 Copy and run this command to download, install, and launch the script in one go:
 ```bash
-wget -O ~/manage_docker.sh [https://raw.githubusercontent.com/davidian-sk/useful-scripts/main/linux/docker_manager.sh](https://raw.githubusercontent.com/davidian-sk/useful-scripts/main/linux/docker_manager.sh) && chmod +x ~/manage_docker.sh && ~/manage_docker.sh
+wget -O ~/manage_docker.sh https://raw.githubusercontent.com/davidian-sk/useful-scripts/main/linux/docker_manager.sh \
+&& chmod +x ~/manage_docker.sh \
+&& ~/manage_docker.sh
+
 ```
 ## **🛠️ Requirements**
 
