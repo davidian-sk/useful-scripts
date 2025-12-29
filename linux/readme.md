@@ -51,6 +51,14 @@ wget -O ~/manage_docker.sh https://raw.githubusercontent.com/davidian-sk/useful-
 && ~/manage_docker.sh
 
 ```
+for curl fans:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/davidian-sk/useful-scripts/main/linux/docker_manager.sh -o ~/manage_docker.sh \
+&& chmod +x ~/manage_docker.sh \
+&& ~/manage_docker.sh
+```
+
 ## **🛠️ Requirements**
 
 * **OS:** Linux (Debian/Ubuntu/Garuda/Raspberry Pi OS)  
