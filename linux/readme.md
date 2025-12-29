@@ -71,16 +71,16 @@ curl -fsSL https://raw.githubusercontent.com/davidian-sk/useful-scripts/main/lin
 
 1. Save the script to your home or bin folder:  
 ```bash
-   \# Create the file  
-   nano \~/manage\_docker.sh  
-   \# (Paste code and save)
+   # Create the file  
+   nano ~/manage_docker.sh  
+   # (Paste code and save)
 
-   \# Make executable  
-   chmod \+x \~/manage\_docker.sh
+   # Make executable  
+   chmod +x ~/manage_docker.sh
 ```
 2. Run it:
 ```bash
-   ./manage\_docker.sh
+   ./manage_docker.sh
 ```
 ## **⚙️ Customization**
 
